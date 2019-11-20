@@ -4,6 +4,10 @@ package main
 panic 会导致『恐慌』，不同于Java中的 异常。
 执行，且只执行，当前goroutine的defer。
 
+panic有操守，退出前会执行本goroutine的defer，方式是原路返回(reverse order)
+panic不多管，不是本goroutine的defer，不执行
+
+
 */
 import "fmt"
 
