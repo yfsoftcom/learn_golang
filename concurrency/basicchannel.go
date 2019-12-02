@@ -8,7 +8,7 @@ Dont communicate by sharing memory, instead, share memory by communicating.
 所以，不正确的使用 channel 同样会导致漏洞。
 
 1. 使用channel进行数据的存取
-2. 不使用 goroutine 的情况和 使用 goroutine的情况？
+2. 不使用 goroutine 的情况和 使用 goroutine 的情况？
 		无缓冲的 channel 是无法在 非 goroutine 的情况下使用的，也就是说一定要在 go 启动的非主线程中的操作才行。
 		带缓冲的 channel 可以。
 
@@ -26,24 +26,22 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
 
 func main() {
 	fmt.Println("foo bar")
 	c := make(chan int)
-	// go foo(c, 2)
-	// v := <-c
-	// fmt.Println(v)
 
-	for i := 1; i <= 10; i++ {
-		go foo(c, i)
-	}
-
+	go foo(c, 1)
+	// for i := 1; i <= 10; i++ {
+	// 	go foo(c, i)
+	// }
+	time.Sleep(time.Second * 2)
 	for v := range c {
 		fmt.Println(v)
 	}
 
-	// close(c)
 	fmt.Println("finish")
 }
 

@@ -23,6 +23,8 @@
 	b of 2000ms
 	----
 	Channel B 的读取不会造成 A 的阻塞，达到了完全的异步
+
+6. 配合 case <-time.After(3 * time.Second): 可以让select的读取3s之后自动超时，并舍弃掉之前的操作。
 */
 package main
 
@@ -33,8 +35,8 @@ import (
 
 func main() {
 	fmt.Println("foo bar")
-	c1 := make(chan string)
-	c2 := make(chan string)
+	c1 := make(chan string, 2)
+	c2 := make(chan string, 2)
 
 	// go
 	go func() {
@@ -46,19 +48,22 @@ func main() {
 
 	go func() {
 		for {
-			c2 <- "b of 2000ms"
 			time.Sleep(time.Second * 2)
+			c2 <- "b of 2000ms"
+
 		}
 	}()
 
-	for {
-		select {
-		case msg1 := <-c1:
-			fmt.Println(msg1)
-		case msg2 := <-c2:
-			fmt.Println(msg2)
-		}
-		fmt.Println("----")
+	// for {
+	select {
+	case msg1 := <-c1:
+		fmt.Println(msg1)
+	case msg2 := <-c2:
+		fmt.Println(msg2)
+	case <-time.After(time.Second):
+		fmt.Println("time out in 1s")
 	}
+	fmt.Println("----")
+	// }
 	fmt.Println("finish")
 }

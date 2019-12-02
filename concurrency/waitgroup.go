@@ -20,12 +20,12 @@ func main() {
 
 	wg.Add(2)
 	go func() {
+		defer wg.Done()
 		count("bob")
-		wg.Done()
 	}()
 	go func() {
+		defer wg.Done()
 		count("jack")
-		wg.Done()
 	}()
 
 	wg.Wait()

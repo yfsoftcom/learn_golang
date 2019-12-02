@@ -39,14 +39,14 @@ func main() {
 	c := &Counter{val: 0}
 	// do some incr or decr times
 	for i := 0; i < 1000; i++ {
-		go c.incr() // 这种方式下，得到的综合
+		go c.incr() // in this case , the result always less than 1000
 	}
 
 	time.Sleep(time.Second)
 	fmt.Println(c.val)
 	c.reset()
 	for i := 0; i < 1000; i++ {
-		go c.safeIncr()
+		go c.safeIncr() // in this case , the result always 1000
 	}
 
 	time.Sleep(time.Second)

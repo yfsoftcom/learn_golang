@@ -34,10 +34,10 @@ func main() {
 }
 
 func count(name string, c chan string) {
+	defer close(c)
 	for i := 1; i <= 5; i++ {
-		// fmt.Println(i, name)
 		c <- name
 		time.Sleep(time.Second * 1)
 	}
-	close(c)
+
 }

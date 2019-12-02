@@ -8,7 +8,10 @@
 	b of 2000ms
 	----
 	程序先输出 a 但是必须等到 b 输出之后才会继续 输出 a ，以证明，通道的读取会阻塞写入的操作，并且读的操作本身是阻塞的
+
+5. use the select,使用 select 语法可以解决阻塞的问题
 */
+
 package main
 
 import (
@@ -18,8 +21,8 @@ import (
 
 func main() {
 	fmt.Println("foo bar")
-	c1 := make(chan string)
-	c2 := make(chan string)
+	c1 := make(chan string, 4)
+	c2 := make(chan string, 2)
 
 	// go
 	go func() {
@@ -32,7 +35,7 @@ func main() {
 	go func() {
 		for {
 			c2 <- "b of 2000ms"
-			time.Sleep(time.Second * 2)
+			// time.Sleep(time.Second * 2)
 		}
 	}()
 
