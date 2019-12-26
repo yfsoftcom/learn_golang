@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"text/template"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -21,6 +22,15 @@ const (
 	SERVER   = "localhost"
 	PORT     = 13306
 	DATABASE = "test"
+	TEMPLATE = `<head><style>td{padding: 3px;}</style></head><h2>导入结果</h2><p>导入时间:{{.now }}</p><p>共计: {{ .total }} 条，成功： {{ .success }} 条</p>
+	<h3>可能重复的SN数据</h3>
+<table border="1" cellspacing="0" cellpadding="0">
+<thead><tr><th>名称</th><th>经度</th><th>纬度</th><th>ip</th><th>sn</th><th>监控ip</th><th>监控名称</th></tr></thead>
+<tbody>
+{{ range .devices }}
+<tr ><td>{{ .Name}}</td><td>{{ .Lng}}</td><td>{{ .Lat}}</td><td>{{ .IP}}</td><td>{{ .Sn}}</td><td>{{ .CameraIP}}</td><td>{{ .CameraName}}</td></tr>
+{{ end }}
+</tbody></table>`
 )
 
 func initDB() *sql.DB {
@@ -36,15 +46,15 @@ func initDB() *sql.DB {
 }
 
 type Entity struct {
-	id         int
-	name       string
-	lat        float64
-	lng        float64
-	sn         string
-	ip         string
-	cameraIP   string
-	cameraName string
-	areaID     int64
+	ID         int
+	Name       string
+	Lat        float64
+	Lng        float64
+	Sn         string
+	IP         string
+	CameraIP   string
+	CameraName string
+	AreaID     int64
 }
 
 // predeclare err
@@ -74,7 +84,7 @@ func parseCsv(file string, areaID int64) (map[string]*Entity, error) {
 		if lng, err = strconv.ParseFloat(line[1], 64); err != nil {
 			return nil, err
 		}
-		devices[sn] = &Entity{id: idx, lat: lat, lng: lng, name: name, sn: sn, ip: ip, cameraIP: cameraIP, cameraName: cameraName, areaID: areaID}
+		devices[sn] = &Entity{ID: idx, Lat: lat, Lng: lng, Name: name, Sn: sn, IP: ip, CameraIP: cameraIP, CameraName: cameraName, AreaID: areaID}
 	}
 	return devices, nil
 }
@@ -109,9 +119,22 @@ func readSn(db *sql.DB) mapset.Set {
 	return snList
 }
 
-func outputCsv(data map[string]*Entity) error {
+func output(total, succ int, data []Entity) error {
+	t, err := template.New("output").Parse(TEMPLATE)
+	checkErr(err)
 
+	now := time.Now().Format("2006-01-02 15:04:05")
+	f, err := os.Create("import_" + now + ".html")
+	defer f.Close()
+	checkErr(err)
+	return t.Execute(f, map[string]interface{}{
+		"now":     now,
+		"total":   total,
+		"success": succ,
+		"devices": data,
+	})
 }
+
 func main() {
 	var csvFile string
 	flag.StringVar(&csvFile, "path", "data.csv", "data.csv")
@@ -132,27 +155,29 @@ func main() {
 	fmt.Println("待导入数据量:", len(devices))
 	tx, err := db.Begin() // 创建tx对象
 	errFlag := false
-	ignoreDevices := make([]*Entity, 10)
+	ignoreDevices := make([]Entity, 0)
 
 	total := len(devices)
 	succ := 0
 	ignored := 0
+
+	timeUnix := time.Now().Unix()
 	for _, device := range devices {
-		if existsSnList.Contains(device.sn) {
+		if existsSnList.Contains(device.Sn) {
 			// exists
-			ignoreDevices = append(ignoreDevices, device)
+			ignoreDevices = append(ignoreDevices, *device)
 			ignored++
 			continue
 		}
 		// insert rows with transaction
-		if _, err = tx.Exec("INSERT INTO dvc_device(name, sn, ip, gps_lat, gps_lng, area_id ) VALUES(?, ?, ?, ?, ?, ?);",
-			device.name, device.sn, device.ip, device.lat, device.lng, device.areaID); err != nil {
+		if _, err = tx.Exec("INSERT INTO dvc_device(name, sn, ip, gps_lat, gps_lng, area_id, createAt, updateAt ) VALUES(?, ?, ?, ?, ?, ?, ?, ?);",
+			device.Name, device.Sn, device.IP, device.Lat, device.Lng, device.AreaID, timeUnix, timeUnix); err != nil {
 			fmt.Println(err)
 			errFlag = true
 			break
 		}
-		if _, err = tx.Exec("INSERT INTO dvc_camera(name, device_sn, ip ) VALUES(?, ?, ?);",
-			device.cameraName, device.sn, device.cameraIP); err != nil {
+		if _, err = tx.Exec("INSERT INTO dvc_camera(name, device_sn, ip, qa_length, model, setup_date, createAt, updateAt ) VALUES(?, ?, ?, ?, ?, ?, ?, ?);",
+			device.CameraName, device.Sn, device.CameraIP, 24, "kakou", timeUnix, timeUnix, timeUnix); err != nil {
 			fmt.Println(err)
 			errFlag = true
 			break
@@ -165,8 +190,9 @@ func main() {
 	} else {
 		tx.Commit()
 		fmt.Println("导入成功!")
-		fmt.Println("共计:", total, ", 成功导入: ", succ, ", 忽略的重复项目: ", ignored)
-
+		fmt.Println("共计:", total, "\n成功导入: ", succ, "\n忽略的重复项目: ", ignored)
+		err := output(total, succ, ignoreDevices)
+		checkErr(err)
 	}
 
 }
