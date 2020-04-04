@@ -1,8 +1,4 @@
-package main
-
-import "fmt"
-
-/**
+/*
 defer 相关内容
 defer更像是 java 中的 try-finally，即使出现 panic 也会执行的代码块可以放在函数开头部分的 defer 中执行。
 1. 运行时机
@@ -14,6 +10,9 @@ defer更像是 java 中的 try-finally，即使出现 panic 也会执行的代�
 3. 与 panic 配合
 
 */
+package main
+
+import "fmt"
 
 func foo() {
 	defer fmt.Println("foo2")
