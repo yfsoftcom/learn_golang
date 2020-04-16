@@ -14,6 +14,7 @@ func main() {
 	message := make(chan string, 2)
 
 	go (func() {
+		time.Sleep(time.Second * 10)
 		message <- "hi"
 	})()
 	select {
