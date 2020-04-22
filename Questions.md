@@ -1,0 +1,23 @@
+## Questions
+
+- GC
+  - When?
+    - sysmon
+    - GC() manually
+    - mallocgc()
+    - http://legendtkl.com/2017/04/28/golang-gc/
+  - How?
+    - https://making.pusher.com/golangs-real-time-gc-in-theory-and-practice/index.html
+    - https://zhuanlan.zhihu.com/p/77943973
+  - What?
+- DeadThread
+- Dead Lock
+- How to implement a Set
+  - https://github.com/deckarep/golang-set
+- Why no generic
+- sync.One
+- Context
+- Channel
+- Select
+- Performance
+  - too many small object or large single object ?

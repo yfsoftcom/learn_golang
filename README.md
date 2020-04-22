@@ -6,6 +6,7 @@
 - context
 - defer
 - io
+- gc
 
 ### context
 
