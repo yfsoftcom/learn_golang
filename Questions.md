@@ -12,6 +12,9 @@
   - What?
 - DeadThread
 - Dead Lock
+- `make()` and `new()`
+  - new always return the type's pointer, make not
+  - make can only apply for the `slice`, `map`, `channel`
 - How to implement a Set
   - https://github.com/deckarep/golang-set
 - Why no generic
