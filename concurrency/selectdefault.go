@@ -17,14 +17,16 @@ func main() {
 		time.Sleep(time.Second * 10)
 		message <- "hi"
 	})()
-	select {
-	case msg := <-message:
-		fmt.Printf("get message: %s \n", msg)
-	case <-time.After(time.Second):
-		fmt.Println("time out in 1s")
-		// default:
-		// 	fmt.Println("nothing receive")
-	}
+	for {
+		select {
+		case msg := <-message:
+			fmt.Printf("get message: %s \n", msg)
+		case <-time.After(time.Second):
+			fmt.Println("time out in 1s")
+		default:
+			// fmt.Println("nothing receive")
+		}
 
+	}
 	fmt.Println("End")
 }

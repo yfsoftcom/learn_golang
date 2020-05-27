@@ -24,7 +24,7 @@ func main() {
 	fmt.Println("foo bar")
 	c := make(chan string)
 	go count("bob", c)
-	// go count("jack", c)
+	go count("jack", c)
 
 	for msg := range c {
 		fmt.Println(msg)

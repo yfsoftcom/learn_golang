@@ -42,16 +42,19 @@ import (
 
 func main() {
 	fmt.Println("foo bar")
-	c := make(chan int)
+	c := make(chan int, 1)
 
 	go foo(c, 1)
+	c <- 50
+	c <- 500
+	close(c)
 	// for i := 1; i <= 10; i++ {
 	// 	go foo(c, i)
 	// }
 	// time.Sleep(time.Second * 2)
-	v := <-c
+	v := <-c // 这里会发生阻塞
 	fmt.Println(v)
-	close(c)
+	// close(c)
 	fmt.Println("finish")
 }
 

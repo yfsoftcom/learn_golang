@@ -54,16 +54,16 @@ func main() {
 		}
 	}()
 
-	// for {
-	select {
-	case msg1 := <-c1:
-		fmt.Println(msg1)
-	case msg2 := <-c2:
-		fmt.Println(msg2)
-	case <-time.After(time.Second):
-		fmt.Println("time out in 1s")
+	for {
+		select {
+		case msg1 := <-c1:
+			fmt.Println(msg1)
+		case msg2 := <-c2:
+			fmt.Println(msg2)
+		case <-time.After(time.Second):
+			fmt.Println("time out in 1s")
+		}
+		fmt.Println("----")
 	}
-	fmt.Println("----")
-	// }
 	fmt.Println("finish")
 }
