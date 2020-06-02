@@ -7,10 +7,12 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 )
 
 type App struct {
-	Router *mux.Router
+	Router     *mux.Router
+	Middleware *Middleware
 }
 
 type shortenReq struct {
@@ -26,9 +28,10 @@ type shortlinkResp struct {
 func (app *App) Initialize() {
 	app.Router = mux.NewRouter()
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	app.Router.HandleFunc("/api/shorten", app.shortenHandler).Methods("POST")
-	app.Router.HandleFunc("/api/info", app.infoHandler).Methods("GET")
-	app.Router.HandleFunc("/{shortlink}", app.shortlinkHandler).Methods("GET")
+	m := alice.New(app.Middleware.LoggerMiddleware, app.Middleware.RecoverMiddleware)
+	app.Router.Handle("/api/shorten", m.ThenFunc(app.shortenHandler)).Methods("POST")
+	app.Router.Handle("/api/info", m.ThenFunc(app.infoHandler)).Methods("GET")
+	app.Router.Handle("/{shortlink}", m.ThenFunc(app.shortlinkHandler)).Methods("GET")
 }
 
 func writeError(w http.ResponseWriter, err error) {
