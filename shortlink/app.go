@@ -13,6 +13,7 @@ import (
 type App struct {
 	Router     *mux.Router
 	Middleware *Middleware
+	Config     *Env
 }
 
 type shortenReq struct {
@@ -27,6 +28,7 @@ type shortlinkResp struct {
 
 func (app *App) Initialize() {
 	app.Router = mux.NewRouter()
+	app.Config = getEnv()
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	m := alice.New(app.Middleware.LoggerMiddleware, app.Middleware.RecoverMiddleware)
 	app.Router.Handle("/api/shorten", m.ThenFunc(app.shortenHandler)).Methods("POST")
@@ -46,9 +48,9 @@ func writeError(w http.ResponseWriter, err error) {
 
 func writeJson(w http.ResponseWriter, code int, payload interface{}) {
 	data, _ := json.Marshal(payload)
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
 	w.WriteHeader(code)
-	w.Header().Set("Content-Type", "application/json")
 }
 func (app *App) shortenHandler(w http.ResponseWriter, r *http.Request) {
 	var req shortenReq
@@ -58,15 +60,22 @@ func (app *App) shortenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-	log.Printf(`data: %s, %d`, req.URL, req.Expired)
+	url, err := app.Config.S.Shorten(req.URL, req.Expired)
+	if err != nil {
+		panic(err)
+	}
+	writeJson(w, 200, url)
 	return
 }
 
 func (app *App) infoHandler(w http.ResponseWriter, r *http.Request) {
 	vals := r.URL.Query()
 	shortlink := vals.Get("shortlink")
-	log.Printf("shortlink: %s", shortlink)
-
+	detail, err := app.Config.S.Detail(shortlink)
+	if err != nil {
+		panic(err)
+	}
+	writeJson(w, 200, detail)
 	return
 }
 
@@ -74,6 +83,11 @@ func (app *App) shortlinkHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	shortlink := vars["shortlink"]
 	log.Printf("shortlink: %s", shortlink)
+	url, err := app.Config.S.UnShorten(shortlink)
+	if err != nil {
+		panic(err)
+	}
+	writeJson(w, 301, url)
 	return
 }
 

@@ -17,3 +17,7 @@ Redis
 - `url.next.id` int
 - `shortlink:%s:url` string
 - `shortlink:%s:detail` map
+
+### Run Redis Server
+
+`$ docker run -p 6379:6379 --name redisserver -d redis:alpine3.11`
