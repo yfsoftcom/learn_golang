@@ -26,9 +26,9 @@ type shortlinkResp struct {
 	CreateAt  string `json:"create_at"`
 }
 
-func (app *App) Initialize() {
+func (app *App) Initialize(env *Env) {
 	app.Router = mux.NewRouter()
-	app.Config = getEnv()
+	app.Config = env
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	m := alice.New(app.Middleware.LoggerMiddleware, app.Middleware.RecoverMiddleware)
 	app.Router.Handle("/api/shorten", m.ThenFunc(app.shortenHandler)).Methods("POST")
