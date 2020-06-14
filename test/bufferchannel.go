@@ -13,14 +13,14 @@ type threadSafeSet struct {
 }
 
 func (set *threadSafeSet) Iter() <-chan interface{} {
-	ch := make(chan interface{}) // 解除注释看看！
-	// ch := make(chan interface{}, len(set.s))
+	// ch := make(chan interface{}) // 解除注释看看！
+	ch := make(chan interface{}, len(set.s))
 	go func() {
 		set.RLock()
 
 		for elem, value := range set.s {
 			ch <- elem
-			println("Iter:", elem, value)
+			fmt.Println("Iter:", elem, value)
 		}
 
 		close(ch)
@@ -36,5 +36,6 @@ func main() {
 		s: []interface{}{"1", "2"},
 	}
 	v := <-th.Iter()
-	fmt.Sprintf("%s%v", "ch", v)
+	// time.Sleep(1000 * time.Millisecond)
+	fmt.Printf("%s%v", "ch", v)
 }
