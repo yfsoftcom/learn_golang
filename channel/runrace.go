@@ -19,27 +19,24 @@ package main
 
 import (
 	"fmt"
-	"sync"
 	"time"
 )
 
-var wg sync.WaitGroup
 var total = 4
 
 func main() {
 	// create the baton
 	baton := make(chan int, 1)
-
-	wg.Add(1)
+	doneSignal := make(chan bool)
 	// create the team
-	go runner(baton)
+	go runner(baton, doneSignal)
 
 	// start with 1
 	baton <- 1
-	wg.Wait()
+	<-doneSignal
 }
 
-func runner(baton chan int) {
+func runner(baton chan int, done chan bool) {
 
 	// get the baton
 	value, ok := <-baton
@@ -54,12 +51,12 @@ func runner(baton chan int) {
 		// finish
 		fmt.Printf("Runner %d finish the race\n", value)
 		close(baton)
-		wg.Done()
+		done <- true
 		return
 	}
 	newRunner := value + 1
 	fmt.Printf("Runner %d ready\n", newRunner)
-	go runner(baton)
+	go runner(baton, done)
 
 	fmt.Printf("Runner %d exchange with Runner %d\n", value, newRunner)
 	baton <- newRunner

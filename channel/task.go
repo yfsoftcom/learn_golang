@@ -26,10 +26,8 @@ import (
 	"time"
 )
 
-var wg sync.WaitGroup
-
 func main() {
-
+	var wg sync.WaitGroup
 	wg.Add(4)
 
 	// create 10 tasks
@@ -37,7 +35,7 @@ func main() {
 
 	// create 4 workers
 	for i := 1; i <= 4; i++ {
-		go worker(tasks, i)
+		go worker(tasks, i, &wg)
 	}
 	for i := 1; i <= 10; i++ {
 		tasks <- i
@@ -47,7 +45,7 @@ func main() {
 	wg.Wait()
 }
 
-func worker(tasks chan int, i int) {
+func worker(tasks chan int, i int, wg *sync.WaitGroup) {
 	fmt.Printf(" worker %d: startup\n", i)
 	defer wg.Done()
 	for {
