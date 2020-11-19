@@ -186,10 +186,12 @@
 ### Redis
 
 ##### 常用数据类型
+string/map/list/set/sortedset
 
 ##### 内部的数据结构
 
 ##### 数据淘汰的算法
+LRU/LFU
 
 ### InfluxDB
 
@@ -202,6 +204,30 @@
 - 通过索引快速查询数据
 
 ##### 主要的架构设计是什么？
+DB -> RP -> Shard Group -> Shard
+Shard -> WAL -> Cache, TSM, Compactor
+
+###### Shard Group
+DB 会根据RP设计原则进行不同的 Shard Group 的拆分，拆分成多个 Shard，每个 Shard 里面的数据是按照时间范围区分的；
+这么做有一些好处：
+- 对于过期的数据，直接删除对应的 Shard 就好，不用根据其他条件进行删除，提高删除的效率
+- 通过范围搜索的时候可以很快的定位到数据
+
+###### WAL & Cache
+可用的数据都放在Cache中操作（程序会直接操作Cache，服务重启会从WAL文件中加载全部数据），添加的数据会被顺序的添加到WAL中；
+cache就是一个 map结构
+其次，Cache在增长的过程中会根据2个策略进行持久化，写入到TSM file中
+- MAXSIZE: 25MB 数据量到达这个阈值之后就会持久化到 tsm 中，清空当前的Cache，并创建一个新的WAL用于写入
+
+###### TSM
+用于存储数据的磁盘文件，使用了自定义的数据结构
+- 数据格式
+
+###### Compactor
+一个定时执行的任务，主要做2个工作
+- 查看Cache满了就进行快照，写入到tsm中
+- 合并多个小的tsm文件，减少文件大小
+
 
 ##### 引擎 TSM
 
